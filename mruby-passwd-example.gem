@@ -1,0 +1,6 @@
+name: mruby-passwd-example
+description: Passwd class
+author: Uchio Kondo
+website: https://github.com/udzura/mruby-passwd-example
+protocol: git
+repository: https://github.com/udzura/mruby-passwd-example.git
