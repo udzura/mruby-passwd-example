@@ -29,6 +29,7 @@ static void mrb_passwd_free(mrb_state *mrb, void *p)
 {
   mrb_passwd *pwd = (mrb_passwd *)p;
   free(pwd->pwd);
+  free(pwd->buf);
   mrb_free(mrb, pwd);
 }
 
@@ -45,7 +46,7 @@ static mrb_value mrb_passwd_init(mrb_state *mrb, mrb_value self)
   bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
   if (bufsize == -1)
     bufsize = 16384;
-  char buf[bufsize];
+  char *buf = malloc(bufsize);
   struct passwd *res;
 
   data = (mrb_passwd *)DATA_PTR(self);
@@ -58,6 +59,7 @@ static mrb_value mrb_passwd_init(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "z", &name);
   data = (mrb_passwd *)mrb_malloc(mrb, sizeof(mrb_passwd));
   data->pwd = malloc(sizeof(struct passwd));
+  data->buf = buf;
 
   if(getpwnam_r(name, &pwd, buf, bufsize, &res) < 0)
     mrb_sys_fail(mrb, "getpwnam failed");
@@ -65,14 +67,15 @@ static mrb_value mrb_passwd_init(mrb_state *mrb, mrb_value self)
     mrb_sys_fail(mrb, "entry not found");
   }
 
-  /* data->pwd = res cannot escape struct from stack...; */
-  /* data->pwd->pw_name  = res->pw_name; */
-  /* data->pwd->pw_uid   = res->pw_uid; */
-  /* data->pwd->pw_gid   = res->pw_gid; */
-  /* data->pwd->pw_gecos = res->pw_gecos; */
-  /* data->pwd->pw_dir   = res->pw_dir; */
-  /* data->pwd->pw_shell = res->pw_shell; */
+  printf("&pwd = %p\n", &pwd);
+  printf("res  = %p\n", res);
+  printf("buf  = %p\n", buf);
+  printf("pwd.pw_name = %p\n", pwd.pw_name);
+
   memcpy(data->pwd, res, sizeof(struct passwd));
+
+  printf("data->pwd = %p\n", data->pwd);
+  printf("data->pwd->pw_name = %p\n", data->pwd->pw_name);
 
   DATA_PTR(self) = data;
 
